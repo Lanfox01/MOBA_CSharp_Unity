@@ -78,7 +78,7 @@ public class ChatUI : MonoBehaviour
             Logs += (logText + "\n");
         }
     }
-
+   // 聊天信息发送
     public void Send()
     {
         if(inputField.text != "" && client != null)

@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ENet;
+using UnityEngine;
+using Event = ENet.Event;
+using EventType = ENet.EventType;
 
 namespace MOBA_CSharp_Client.ClientNetwork
 {
@@ -18,7 +21,7 @@ namespace MOBA_CSharp_Client.ClientNetwork
 
         Host client;  // 客户端主机
         Address address;  // 服务器地址
-        Peer peer;  // 与服务器通信的Peer
+        Peer peer;  // 与服务器通信的Peer  这是一种什么概念？ Pear?  是一种封装？
 
         // 构造函数，初始化消息处理器数组，长度为MessageType枚举的数量
         public ClientNetwork()
@@ -86,22 +89,22 @@ namespace MOBA_CSharp_Client.ClientNetwork
                         break;
 
                     case EventType.Connect:
-                        Console.WriteLine("客户端已连接到服务器 - ID: " + peer.ID);
+                        Debug.Log("客户端已连接到服务器 - ID: " + peer.ID); 
                         Invoke(MessageType.Connect, new byte[0]);  // 调用连接消息处理器
                         break;
 
                     case EventType.Disconnect:
-                        Console.WriteLine("客户端已断开与服务器的连接");
+                        Debug.Log("客户端已断开与服务器的连接");
                         Invoke(MessageType.Disconnect, new byte[0]);  // 调用断开消息处理器
                         break;
 
                     case EventType.Timeout:
-                        Console.WriteLine("客户端连接超时");
+                        Debug.Log("客户端连接超时");
                         Invoke(MessageType.Timeout, new byte[0]);  // 调用超时消息处理器
                         break;
 
                     case EventType.Receive:
-                        Console.WriteLine("从服务器收到数据包 - 通道ID: " + netEvent.ChannelID + ", 数据长度: " + netEvent.Packet.Length);
+                        Debug.Log("从服务器收到数据包 - 通道ID: " + netEvent.ChannelID + ", 数据长度: " + netEvent.Packet.Length);
                         Receive(netEvent);  // 处理收到的数据
                         netEvent.Packet.Dispose();  // 释放数据包资源
                         break;

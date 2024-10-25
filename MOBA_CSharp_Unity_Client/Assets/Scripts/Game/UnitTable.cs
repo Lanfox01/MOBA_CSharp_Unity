@@ -32,7 +32,7 @@ public class UnitTable : ScriptableObject
     public UnitModel[] table;
 
     Dictionary<UnitType, UnitModel> cache = new Dictionary<UnitType, UnitModel>();
-
+    // 这是一个工具类？
     public UnitModel GetUnitModel(UnitType type)
     {
         if(cache.ContainsKey(type))
