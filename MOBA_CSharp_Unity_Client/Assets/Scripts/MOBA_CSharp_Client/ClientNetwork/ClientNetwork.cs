@@ -71,21 +71,23 @@ namespace MOBA_CSharp_Client.ClientNetwork
             }
         }
 
-        // 处理网络事件
+        // 处理网络事件  通信处理模块
         public void Service()
         {
             if(client == null)
             {
                 return;
             }
-
+            
             Event netEvent;
-            // 处理所有网络事件
+            // 处理所有网络事件  根据设定好的间隔解析信号？好像是半秒一次？能改？  似乎client.Service()返回值大于0 表示有网络信号需要处理
+            // 似乎只有这么几件 EventType 事件？ 能否修改？
             while (client.Service(0, out netEvent) > 0)
             {
                 switch (netEvent.Type)
                 {
                     case EventType.None:
+                        Debug.Log(" 没有网络事件？？ EventType.None");
                         break;
 
                     case EventType.Connect:
@@ -103,7 +105,7 @@ namespace MOBA_CSharp_Client.ClientNetwork
                         Invoke(MessageType.Timeout, new byte[0]);  // 调用超时消息处理器
                         break;
 
-                    case EventType.Receive:
+                    case EventType.Receive: // 这里不断的收到数据，心跳数据，或其他实时数据?
                         Debug.Log("从服务器收到数据包 - 通道ID: " + netEvent.ChannelID + ", 数据长度: " + netEvent.Packet.Length);
                         Receive(netEvent);  // 处理收到的数据
                         netEvent.Packet.Dispose();  // 释放数据包资源
@@ -113,7 +115,7 @@ namespace MOBA_CSharp_Client.ClientNetwork
         }
 
         // 调用指定类型的消息处理器
-        void Invoke(MessageType type, byte[] data)
+        void  Invoke(MessageType type, byte[] data)
         {
             handlers[(int)type]?.Invoke(data);
         }
@@ -121,7 +123,7 @@ namespace MOBA_CSharp_Client.ClientNetwork
         // 处理收到的数据包
         void Receive(Event netEvent)
         {
-            if(netEvent.Packet.Length < MessageConfig.MESSAGE_LEN)
+            if(netEvent.Packet.Length < MessageConfig.MESSAGE_LEN)//小于一个预定义的最小长度 最小长度通常包含了消息类型和其他必要头部信息的大小
             {
                 return;
             }
@@ -129,10 +131,12 @@ namespace MOBA_CSharp_Client.ClientNetwork
             byte[] buffer = new byte[netEvent.Packet.Length];
             netEvent.Packet.CopyTo(buffer);  // 将数据包内容复制到缓冲区
 
-            // 从数据包中提取消息类型
+            // 从数据包中提取消息类型   这行代码从buffer的前两个字节中提取一个整数（使用BitConverter.ToInt16），
+            // 并将其转换为MessageType枚举值。这通常表示接收到的数据包属于哪种消息类型，
+            // MessageType是一个枚举，定义了应用程序支持的不同消息类型。
             MessageType type = (MessageType)BitConverter.ToInt16(buffer, 0);
 
-            // 提取数据部分
+            // 提取数据部分 减去数据类型的2个字节
             byte[] data = new byte[netEvent.Packet.Length - MessageConfig.MESSAGE_LEN];
             Array.Copy(buffer, 2, data, 0, data.Length);
 

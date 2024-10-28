@@ -91,7 +91,7 @@ public class Network : MonoBehaviour
         Movement.SetFrameRate(GetYAMLObject(@"YAML\ClientConfig.yml").GetData<int>("FrameRate"));
         RTSCamera.IsScreenEdgeMovement = GetYAMLObject(@"YAML\ClientConfig.yml").GetData<bool>("IsScreenEdgeMovement");
         RecallUI.RecallTime = GetYAMLObject(CombatType.Recall).GetData<float>("RecallTime");
-        // 设置网络消息处理程序
+        // 设置网络消息处理程序  注册事件，或者订阅；
         client.SetMessageHandler(MessageType.Connect, ConnectHandler);
         client.SetMessageHandler(MessageType.Disconnect, DisconnectHandler);
         client.SetMessageHandler(MessageType.Timeout, TimeoutHandler);
@@ -363,7 +363,7 @@ public void TriggeredStart()
     {
         client.Send(type, data, flags);
     }
-
+    ///解析大厅信息、更新UI状态以及处理玩家选择
     void LobbyHandler(byte[] data)
     {
         LobbyObj lobbyObj = MessagePackSerializer.Deserialize<LobbyObj>(data);
