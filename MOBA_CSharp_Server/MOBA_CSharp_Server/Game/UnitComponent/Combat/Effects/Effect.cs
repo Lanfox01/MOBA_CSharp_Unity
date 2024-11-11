@@ -7,7 +7,7 @@ using MOBA_CSharp_Server.Library.DataReader;
 using MOBA_CSharp_Server.Library.ECS;
 
 namespace MOBA_CSharp_Server.Game
-{
+{  // 特效？ 战斗特效？战斗能力？
     public class Effect : Combat
     {
         public bool IsSendDataToClient;

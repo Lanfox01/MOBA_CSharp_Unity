@@ -10,13 +10,13 @@ namespace MOBA_CSharp_Server.Game
     {
         int unitID = 0;
 
-        Dictionary<int, Unit> units = new Dictionary<int, Unit>();
+        Dictionary<int, Unit> units = new Dictionary<int, Unit>(); //单元？单位？ 非英雄单位？小兵？塔？ 映射出在世界单位的管理体系；
 
         public WorldEntity(Entity root) : base(root)
         {
             AddInheritedType(typeof(WorldEntity));
         }
-
+        //添加实体 到树形结构节点上 
         public override void AddChild(Entity entity)
         {
             if (isDuringStep)
@@ -31,10 +31,10 @@ namespace MOBA_CSharp_Server.Game
                     {
                         children.Add(type, new List<Entity>());
                     }
-                    children[type].Add(entity);
+                    children[type].Add(entity); // 同种类型的 实例 挂到一起；
                 }
 
-                if (entity is Unit)
+                if (entity is Unit) // 除了派生这个节点外，还得记录下根节点是 Unit 的所有活动实例
                 {
                     Unit unit = (Unit)entity;
                     units.Add(unit.UnitID, unit);
@@ -52,10 +52,10 @@ namespace MOBA_CSharp_Server.Game
             {
                 foreach (Type type in entity.InheritedTypes)
                 {
-                    children[type].Remove(entity);
-                    if (children[type].Count == 0)
+                    children[type].Remove(entity);  // 移除盖类型下的实例；
+                    if (children[type].Count == 0) //当这个实例=0的情况下 清掉对应的类型
                     {
-                        children.Remove(type);
+                        children.Remove(type);  
                     }
                 }
 
@@ -84,12 +84,12 @@ namespace MOBA_CSharp_Server.Game
         {
             return unitID++;
         }
-
+        // 重要的入口；服务端中 游戏世界单位 管理入口；
         public override void Step(float deltaTime)
         {
-            SetStatus(deltaTime);
+            SetStatus(deltaTime); //更新所有单位的状态  主要是1这个 deltaTime作为因子，而可能会检测都操作数据变化？
 
-            ConfirmDamage();
+            ConfirmDamage();     // 确认伤害
 
             base.Step(deltaTime);
 
@@ -98,20 +98,20 @@ namespace MOBA_CSharp_Server.Game
 
         void SetStatus(float deltaTime)
         {
-            foreach (Unit unit in GetChildren<Unit>())
+            foreach (Unit unit in GetChildren<Unit>()) /// 得到场景中所有的 场上单位 Unit 
             {
-                unit.SetStatus(deltaTime);
+                unit.SetStatus(deltaTime);  // 
             }
         }
 
         void ConfirmDamage()
         {
-            foreach (Unit unit in GetChildren<Unit>())
+            foreach (Unit unit in GetChildren<Unit>()) //得到场景中所有的 场上单位 Unit  确认所有单位的伤害
             {
                 unit.ConfirmDamage();
             }
         }
-
+        // 获取英雄数据
         public ChampionObj[] GetChampionObjs(bool blueTeam)
         {
             List<ChampionObj> ret = new List<ChampionObj>();
@@ -126,7 +126,7 @@ namespace MOBA_CSharp_Server.Game
 
             return ret.ToArray();
         }
-
+        // 获取塔数据
         public BuildingObj[] GetBuildingObj()
         {
             List<BuildingObj> ret = new List<BuildingObj>();
@@ -141,7 +141,7 @@ namespace MOBA_CSharp_Server.Game
 
             return ret.ToArray();
         }
-
+        //技能物体。
         public ActorObj[] GetActorObjs(bool blueTeam)
         {
             List<ActorObj> ret = new List<ActorObj>();
@@ -156,7 +156,7 @@ namespace MOBA_CSharp_Server.Game
 
             return ret.ToArray();
         }
-
+        // 获取每队的小兵数据
         public UnitObj[] GetUnitObjs(bool blueTeam)
         {
             List<UnitObj> ret = new List<UnitObj>();
@@ -171,7 +171,7 @@ namespace MOBA_CSharp_Server.Game
 
             return ret.ToArray();
         }
-
+        // 泉水位置？？？
         public Vector2 GetFountainPosition(Team team)
         {
             return GetChildren<Fountain>().ToList().First(x => x.Team == team).GetChild<Transform>().Position;

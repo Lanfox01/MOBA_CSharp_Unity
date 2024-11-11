@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MOBA_CSharp_Server.Library.ECS;
 
 namespace MOBA_CSharp_Server.Game
-{
+{ // 技能
     public class Ability : Combat
     {
         public Ability(CombatType type, Unit unitRoot, Entity root) : base(type, unitRoot, root)

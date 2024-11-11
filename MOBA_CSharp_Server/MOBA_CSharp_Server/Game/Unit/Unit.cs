@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace MOBA_CSharp_Server.Game
 {
+    // 游戏场景中的 基本呈现单元
     public class Unit : Entity
     {
         public UnitType Type { get; private set; }
@@ -22,8 +23,8 @@ namespace MOBA_CSharp_Server.Game
         public float HP { get; private set; }
         public float MP { get; private set; }
 
-        List<DamageHistory> hpDamageHistories = new List<DamageHistory>();
-        List<DamageHistory> mpDamageHistories = new List<DamageHistory>();
+        List<DamageHistory> hpDamageHistories = new List<DamageHistory>();//一个记录伤害历史的列表
+        List<DamageHistory> mpDamageHistories = new List<DamageHistory>();//mpDamageHistories 是一个列表（或集合），其中包含了关于MP变动的历史记录
 
         //Status
         public Status Status { get; private set; } = new Status();
@@ -44,7 +45,7 @@ namespace MOBA_CSharp_Server.Game
             OwnerUnitID = UnitID;
             Team = team;
             Gold = gold;
-
+            //每个单元 最基本的 两个 数据组件
             AddChild(new UnitStatus(this, Root));
             AddChild(new Transform(position, height, rotation, collisionType, radius, this, Root));
 
@@ -81,10 +82,10 @@ namespace MOBA_CSharp_Server.Game
                 return Root.GetChild<DataReaderEntity>().GetYAMLObject(@"YAML\Units\Default.yml");
             }
         }
-
+        //设置角色的状态
         public void SetStatus(float deltaTime)
         {
-            //Init
+            //Init // 这个建了很多容器 用来存储大量的各种参数？并且分类存放？  主要是对应的数据组件 Combat 也是这种设计的；  
             Dictionary<FloatStatus, List<FloatParam>> floatParams = new Dictionary<FloatStatus, List<FloatParam>>();
             foreach(FloatStatus type in Enum.GetValues(typeof(FloatStatus)))
             {
@@ -102,7 +103,7 @@ namespace MOBA_CSharp_Server.Game
             }
             List<AnimParam> animParams = new List<AnimParam>();
 
-            //Add
+            //Add  遍历 单位 uint 身上挂在的 数据组件 Combat；可能有多种ComBat的派生子类组件；全部收集 装入三个大仓库中 应该是引用收集不是复制
             foreach (Combat combat in GetChildren<Combat>())
             {
                 foreach(FloatParam param in combat.floatParams.Values)
@@ -251,18 +252,18 @@ namespace MOBA_CSharp_Server.Game
 
         public void ConfirmDamage()
         {
-            ConfirmHPDamage();
-            ConfirmMPDamage();
+            ConfirmHPDamage(); //HP伤害？ 处理生命值（HP）的伤害逻辑 物理伤害？
+            ConfirmMPDamage(); // MP 伤害？魔法值（MP）的伤害逻辑  魔法伤害？
         }
-
+        // 它首先更新角色的状态，然后计算新的生命值，并根据生命值的变化处理角色死亡的情况。以下是详细步骤：
         void ConfirmHPDamage()
-        {
+        {   //根据hpDamageHistories（一个记录伤害历史的列表）中是否有任何记录标记为伤害（IsDamage为true），来设置角色是否被伤害
             Status.Damaged = hpDamageHistories.Any(x => x.IsDamage);
-            Status.AttackedUnitIDs = hpDamageHistories.Select(x => x.UnitID).ToList();
+            Status.AttackedUnitIDs = hpDamageHistories.Select(x => x.UnitID).ToList();//收集所有造成伤害的单位ID。
 
-            float sum = hpDamageHistories.Sum(x => x.IsDamage ? x.Amount : -x.Amount);
+            float sum = hpDamageHistories.Sum(x => x.IsDamage ? x.Amount : -x.Amount);//根据记录中的IsDamage字段来决定是加上还是减去Amount（伤害值或治疗值）。
 
-            float nextHP = HP - sum;
+            float nextHP = HP - sum;//计算出新的生命值nextHP，并确保它不会超过最大生命值（Status.FloatStatus[(int)FloatStatus.MaxHP]）也不会低于0。
             if (nextHP > Status.FloatStatus[(int)FloatStatus.MaxHP])
             {
                 nextHP = Status.FloatStatus[(int)FloatStatus.MaxHP];
@@ -274,30 +275,32 @@ namespace MOBA_CSharp_Server.Game
 
             Status.Dead = HP > 0 && nextHP <= 0;
             HP = nextHP;
-
-            if(Status.Dead)
-            {
+            ///用于处理角色死亡时奖励的分配。它确保了当角色被多个单位同时攻击并导致死亡时，这些攻击单位能够公平地获得奖励。
+            ///同时，通过去除重复的ID和检查列表是否为空，避免了不必要的计算和潜在的错误。  这里应该是很重要的代码段
+            if (Status.Dead)
+            { //从hpDamageHistories列表中筛选出所有标记为伤害（IsDamage为true）的记录。 提取这些记录中的UnitID（攻击单位的ID）。
                 List<int> attackedUnitIDs = hpDamageHistories.Where(x => x.IsDamage).Select(x => x.UnitID).ToList();
-                attackedUnitIDs = attackedUnitIDs.Distinct().ToList();
+                attackedUnitIDs = attackedUnitIDs.Distinct().ToList();//使用Distinct()方法去除重复的ID
 
-                if(attackedUnitIDs.Count > 0)
+                if (attackedUnitIDs.Count > 0)//有攻击者？ 自杀呢?应该不行  很高地方掉落呢
                 {
-                    int level = GetChild<UnitStatus>().Level;
+                    int level = GetChild<UnitStatus>().Level; // 获取当前单位等级： 根据等级来计算奖励
 
-                    float exp = Utilities.CalculateExp(Type, level) / attackedUnitIDs.Count;
+                    float exp = Utilities.CalculateExp(Type, level) / attackedUnitIDs.Count; // attackedUnitIDs.Count 攻击单位的数量；平均分？见者有份
                     float gold = Utilities.CalculateGold(Type, level) / attackedUnitIDs.Count;
 
                     foreach (int attackedUnitID in attackedUnitIDs)
                     {
-                        Unit unit = Root.GetChild<WorldEntity>().GetUnit(attackedUnitID);
+                        Unit unit = Root.GetChild<WorldEntity>().GetUnit(attackedUnitID); // 根据每个UnitID 找到这个对象Unit
                         if (unit != null)
                         {
-                            unit.AddExp(exp);
+                            unit.AddExp(exp);     // 刷新这个对象Unit数据；加钱加经验
                             unit.AddGold(gold);
                         }
                     }
                 }
             }
+            //清理伤害历史：清空hpDamageHistories列表，为下一次伤害计算做准备
 
             hpDamageHistories.Clear();
         }
@@ -311,12 +314,12 @@ namespace MOBA_CSharp_Server.Game
         {
             Gold += amount;
         }
-
+        // 计算和确认魔法值（MP，Magic Points）的损耗，并更新角色的MP值
         void ConfirmMPDamage()
         {
             float sum = mpDamageHistories.Sum(x => x.IsDamage ? x.Amount : -x.Amount);
 
-            float nextMP = MP - sum;
+            float nextMP = MP - sum; // 不超最大，或者清零
             if (nextMP > Status.FloatStatus[(int)FloatStatus.MaxMP])
             {
                 nextMP = Status.FloatStatus[(int)FloatStatus.MaxMP];

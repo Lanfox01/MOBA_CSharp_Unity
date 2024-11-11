@@ -7,7 +7,7 @@ using MOBA_CSharp_Server.Library.DataReader;
 using MOBA_CSharp_Server.Library.ECS;
 
 namespace MOBA_CSharp_Server.Game
-{
+{   //道具？
     public class Item : Combat
     {
         public int SlotNum;

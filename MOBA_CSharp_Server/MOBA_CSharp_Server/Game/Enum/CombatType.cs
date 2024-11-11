@@ -1,10 +1,10 @@
 ﻿public enum CombatType
 {
-    //Ability
+    //Ability 基本的能力
     Move,
     Attack,
     Recall,
-    //Skill
+    //Skill   技能
     FireBall,
     FireBreath,
     Meteor,
@@ -12,7 +12,7 @@
     EarthShatter,
     PoisonGas,
     PressurisedSteam,
-    //Effect
+    //Effect   这个不太懂是什么？
     UnitStatus,
     Eye,
     Respawn,
@@ -22,7 +22,7 @@
     Stun,
     Poison,
     Slow,
-    //Item
+    //Item 道具 或者装备
     Potion,
     Armor,
     RareArmor,

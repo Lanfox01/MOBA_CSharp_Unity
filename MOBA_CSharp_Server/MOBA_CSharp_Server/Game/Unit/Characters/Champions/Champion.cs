@@ -8,7 +8,7 @@ using MOBA_CSharp_Server.Library.DataReader;
 using MOBA_CSharp_Server.Library.ECS;
 
 namespace MOBA_CSharp_Server.Game
-{
+{      //角色？英雄单位？ 
     public class Champion : Character
     {
         public uint PeerID { get; private set; }
